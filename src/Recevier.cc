@@ -20,11 +20,12 @@ Define_Module(Recevier);
 
 void Recevier::initialize()
 {
-    // TODO - Generated method body
+    //inatialize varibles
     frame_exp=0;
     ack=0;
     WS=getParentModule()->par("WS").intValue();
 }
+//function to write output file
 bool Recevier::printTXT(std::string o){
 
     std::ofstream outFile("C:\\omnetpp-5.6.2\\samples\\MiniProject\\output.txt",  std::ios::in | std::ios::out | std::ios::ate);
@@ -39,6 +40,7 @@ bool Recevier::printTXT(std::string o){
 }
 void Recevier::handleMessage(cMessage *msg)
 {
+    //from coordanitor
     std::string y1=msg->getName();
     if(y1=="0" or y1=="1"){
             int r=1-std::stoi(msg->getName());
@@ -49,9 +51,11 @@ void Recevier::handleMessage(cMessage *msg)
     std::string a="ACK";
     // TODO - Generated method body
     MyMassage_Base *mmsg=check_and_cast<MyMassage_Base*>(msg);
-    //EV<<" got frame="<<mmsg->getSeq_Num()<<" data="<<mmsg->getM_Payload()<<" frameExp="<<frame_exp;
+    EV<<" got frame="<<mmsg->getSeq_Num()<<" data="<<mmsg->getM_Payload()<<" frameExp="<<frame_exp;
+    //check if frame is frame exp
     if(mmsg->getSeq_Num()==frame_exp){
-        //EV<<"got frame="<<frame_exp;
+        EV<<"got frame="<<frame_exp;
+        //check parity byte
         std::string g=mmsg->getM_Payload();
         if(g[0]=='$' and g[g.size()-1]=='$'){
 
@@ -64,8 +68,8 @@ void Recevier::handleMessage(cMessage *msg)
             }
             EV<<" total="<<total;
             if(total==b){
-                //correct
-                //EV<<" correct";
+                //correct then send ack
+                EV<<" correct";
                 frame_exp+=1;
                 if(frame_exp==WS){
                     frame_exp=0;
@@ -77,6 +81,7 @@ void Recevier::handleMessage(cMessage *msg)
                 mmsg->setACK(ack);
 
             }
+            //not same partiy send Nack
             else{
                 a="NACK";
                 //notcorrect
@@ -84,6 +89,7 @@ void Recevier::handleMessage(cMessage *msg)
                 mmsg->setACK(ack);
             }
         }
+        ////not same flags(first char and last char not $) send Nack
         else{
             a="NACK";
             mmsg->setFrametype(2);
@@ -91,6 +97,7 @@ void Recevier::handleMessage(cMessage *msg)
 
         }
     }
+    //not frame exp send Nack
     else{
         a="NACK";
         mmsg->setFrametype(2);
@@ -100,17 +107,24 @@ void Recevier::handleMessage(cMessage *msg)
 //        mmsg->setACK(mmsg->getSeq_Num()+1);
 
     }
+    //probability to send ack or Nack
     double ww=simTime().dbl()+par("PT").doubleValue();
     //EV<<"send time node 1="<<ww<<endl;
 
-//    int rand=uniform(0,1)*10;
-//    EV<<"prob="<<rand<<endl;
-//    if(rand>=getParentModule()->par("prob").intValue()){
-        EV<<"got ack for"<<mmsg->getACK()<<" payload="<<mmsg->getM_Payload();
-       sendDelayed(mmsg,par("TD").doubleValue()+par("PT").doubleValue(),"out");
-       std::string out1="At time["+std::to_string(ww)+" ], Node["+node+"] Sending ["+a+"] with number ["+std::to_string(ack)+"] , loss [No]";
-        printTXT(out1);
-   // }
+    int rand=uniform(0,1)*10;
+    EV<<"prob="<<rand<<endl;
+    if(rand>=getParentModule()->par("prob").intValue()){
+      EV<<"got ack for"<<mmsg->getACK()<<" payload="<<mmsg->getM_Payload();
+      sendDelayed(mmsg,par("TD").doubleValue()+par("PT").doubleValue(),"out");
+      std::string out1="At time["+std::to_string(ww)+" ], Node["+node+"] Sending ["+a+"] with number ["+std::to_string(ack)+"] , loss [No]";
+      printTXT(out1);
+    }
+    else{
+        //miss send ack
+        EV<<" miss send ack";
+        std::string out1="At time["+std::to_string(ww)+" ], Node["+node+"] Sending ["+a+"] with number ["+std::to_string(ack)+"] , loss [No], ACK Loss";
+            printTXT(out1);
+    }
 
 
 

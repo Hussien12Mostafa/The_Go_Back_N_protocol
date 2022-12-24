@@ -19,13 +19,14 @@ Define_Module(Coordinator);
 
 void Coordinator::initialize()
 {
+    //read file coordinator.txt
     std::ifstream inFile;
         inFile.open("C:\\omnetpp-5.6.2\\samples\\MiniProject\\coordinator.txt");
         if (!inFile) {
             EV << "Unable to open file datafile.txt";
 
         }
-
+        //get node num of sender
         std::string x;
 
         std::getline(inFile, x);
@@ -36,12 +37,13 @@ void Coordinator::initialize()
         sender1=x[4];
         EV<<sender1<<endl;
         int i=16;
+        //get start time
         while(x[i]-48>=0 and x[i]-48<=9){
             startTime=startTime+x[i];
 
             i++;
         }
-
+        //send num node to sender and the another num for rec after delay
         EV<<startTime<<endl;
         int c=std::stoi(startTime);
         cMessage *msg=new cMessage(sender1.c_str());
